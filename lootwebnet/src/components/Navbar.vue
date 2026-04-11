@@ -4,7 +4,7 @@
 
       <div class="flex items-center gap-2 text-2xl font-bold text-white cursor-pointer">
         <span>⚔️</span>
-        <span>EpicTrade</span>
+        <span>Lootnet</span>
       </div>
 
       <div class="hidden md:flex items-center gap-6">

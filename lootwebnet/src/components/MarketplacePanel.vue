@@ -1,62 +1,67 @@
 <template>
-  <div class="max-w-6xl mx-auto p-5 font-sans text-gray-200 bg-zinc-900 rounded-lg">
-    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 pb-4 border-b border-zinc-800 gap-4">
-      <h2 class="text-2xl font-bold m-0 text-white">Global Trade Market</h2>
+  <div class="min-h-screen w-full flex items-center justify-center bg-zinc-950 p-4 font-sans">
 
-      <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-        <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search items..."
-            class="px-3 py-2 bg-zinc-800 border border-zinc-700 text-white rounded focus:outline-none focus:border-green-500 transition-colors w-full sm:w-64"
-        />
+    <div class="w-full max-w-6xl p-6 text-gray-200 bg-zinc-900 rounded-lg shadow-2xl">
 
-        <select
-            v-model="selectedCategory"
-            class="px-3 py-2 bg-zinc-800 border border-zinc-700 text-white rounded focus:outline-none focus:border-green-500 transition-colors w-full sm:w-auto"
+      <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 pb-4 border-b border-zinc-800 gap-4">
+        <h2 class="text-2xl font-bold m-0 text-white">Global Trade Market</h2>
+
+        <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search items..."
+              class="px-3 py-2 bg-zinc-800 border border-zinc-700 text-white rounded focus:outline-none focus:border-green-500 transition-colors w-full sm:w-64"
+          />
+
+          <select
+              v-model="selectedCategory"
+              class="px-3 py-2 bg-zinc-800 border border-zinc-700 text-white rounded focus:outline-none focus:border-green-500 transition-colors w-full sm:w-auto"
+          >
+            <option value="All">All Categories</option>
+            <option value="Weapons">Weapons</option>
+            <option value="Armor">Armor</option>
+            <option value="Consumables">Consumables</option>
+            <option value="Materials">Materials</option>
+          </select>
+        </div>
+      </header>
+
+      <main class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div
+            v-for="item in filteredItems"
+            :key="item.id"
+            class="bg-zinc-800 border border-zinc-700 rounded-md p-4 flex flex-col gap-3 hover:-translate-y-1 hover:border-zinc-500 transition-all duration-200 border-l-4 shadow-sm"
+            :class="rarityBorderClass(item.rarity)"
         >
-          <option value="All">All Categories</option>
-          <option value="Weapons">Weapons</option>
-          <option value="Armor">Armor</option>
-          <option value="Consumables">Consumables</option>
-          <option value="Materials">Materials</option>
-        </select>
-      </div>
-    </header>
+          <div class="h-16 bg-zinc-900 rounded flex items-center justify-center font-bold text-gray-500">
+            <span>{{ item.quantity }}x</span>
+          </div>
 
-    <main class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      <div
-          v-for="item in filteredItems"
-          :key="item.id"
-          class="bg-zinc-800 border border-zinc-700 rounded-md p-4 flex flex-col gap-3 hover:-translate-y-1 hover:border-zinc-500 transition-all duration-200 border-l-4"
-          :class="rarityBorderClass(item.rarity)"
-      >
-        <div class="h-16 bg-zinc-900 rounded flex items-center justify-center font-bold text-gray-500">
-          <span>{{ item.quantity }}x</span>
+          <div class="flex flex-col">
+            <h3 class="text-lg font-semibold text-white m-0">{{ item.name }}</h3>
+            <span class="text-xs uppercase tracking-wider opacity-80" :class="rarityTextClass(item.rarity)">
+              {{ item.rarity }}
+            </span>
+            <p class="text-sm text-gray-400 mt-1 mb-0">Sold by: {{ item.seller }}</p>
+          </div>
+
+          <div class="text-xl font-bold text-yellow-400 flex items-center gap-1 mt-auto">
+            <span>🪙</span>
+            {{ item.price.toLocaleString() }}
+          </div>
+
+          <button class="w-full py-2 mt-2 bg-green-600 hover:bg-green-500 text-white font-bold rounded transition-colors focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-50">
+            Buy
+          </button>
         </div>
 
-        <div class="flex flex-col">
-          <h3 class="text-lg font-semibold text-white m-0">{{ item.name }}</h3>
-          <span class="text-xs uppercase tracking-wider opacity-80" :class="rarityTextClass(item.rarity)">
-            {{ item.rarity }}
-          </span>
-          <p class="text-sm text-gray-400 mt-1 mb-0">Sold by: {{ item.seller }}</p>
+        <div v-if="filteredItems.length === 0" class="col-span-full text-center p-10 text-gray-500 bg-zinc-800/50 rounded-lg border border-dashed border-zinc-700">
+          No items found matching your criteria.
         </div>
+      </main>
 
-        <div class="text-xl font-bold text-yellow-400 flex items-center gap-1 mt-auto">
-          <span>🪙</span>
-          {{ item.price.toLocaleString() }}
-        </div>
-
-        <button class="w-full py-2 mt-2 bg-green-600 hover:bg-green-500 text-white font-bold rounded transition-colors focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-50">
-          Buy
-        </button>
-      </div>
-
-      <div v-if="filteredItems.length === 0" class="col-span-full text-center p-10 text-gray-500 bg-zinc-800/50 rounded-lg border border-dashed border-zinc-700">
-        No items found matching your criteria.
-      </div>
-    </main>
+    </div>
   </div>
 </template>
 
