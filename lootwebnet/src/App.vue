@@ -1,10 +1,12 @@
 <script setup lang="ts">
 // Import the component you just made
 import MarketplacePanel from './components/MarketplacePanel.vue';
+import Navbar from "@/components/Navbar.vue";
 </script>
 
 <template>
   <div class="app-wrapper">
+    <Navbar />
     <MarketplacePanel />
   </div>
 </template>
