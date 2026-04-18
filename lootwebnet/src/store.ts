@@ -1,61 +1,101 @@
-// store.ts
+// src/store.ts
 import { ref } from 'vue';
+import { api } from './components/api'; // Make sure you created this file from Step 1!
 
-export type Rarity = 'Common' | 'Uncommon' | 'Rare' | 'Epic' | 'Legendary';
-export type Category = 'All' | 'Weapons' | 'Armor' | 'Consumables' | 'Materials';
+// --- Types & Enums ---
+// Aligned with backend Enum: 0 = Weapons, 1 = Armor, etc. (Expand as needed)
+export enum ItemCategory {
+    Weapons = 0,
+    Armor = 1,
+    Consumables = 2,
+    Materials = 3
+}
 
 export interface MarketItem {
-    id: string;
-    name: string;
-    category: Exclude<Category, 'All'>;
-    rarity: Rarity;
+    id: string; // The listing ID (UUID)
+    itemId: string; // The game item UUID
+    name: string; // Assuming backend returns this, otherwise you may need to map it
+    category: ItemCategory;
     price: number;
-    quantity: number;
     seller: string;
 }
 
-// Shared State
-export const userBalance = ref(1250);
+export interface InventoryItem {
+    id: string; // The game item UUID in the player's possession
+    name: string;
+    category?: ItemCategory;
+}
 
-export const marketItems = ref<MarketItem[]>([
-    { id: '1', name: 'Iron Sword', category: 'Weapons', rarity: 'Common', price: 150, quantity: 1, seller: 'WarriorBob99' },
-    { id: '2', name: 'Health Potion (Large)', category: 'Consumables', rarity: 'Uncommon', price: 45, quantity: 20, seller: 'HealerJane' },
-    { id: '3', name: 'Dragon Scale Chestplate', category: 'Armor', rarity: 'Epic', price: 15000, quantity: 1, seller: 'LootMaster' },
-    { id: '4', name: 'Mithril Ore', category: 'Materials', rarity: 'Rare', price: 800, quantity: 50, seller: 'MinerDan' },
-    { id: '5', name: 'Excalibur', category: 'Weapons', rarity: 'Legendary', price: 999999, quantity: 1, seller: 'KingArthur' },
-]);
+// --- Global State ---
+export const userBalance = ref(0);
+export const marketItems = ref<MarketItem[]>([]);
+export const inventory = ref<InventoryItem[]>([]);
+export const isLoading = ref(false);
 
-// Actions
-export const buyItem = (item: MarketItem) => {
-    if (userBalance.value >= item.price) {
-        userBalance.value -= item.price;
+// --- Actions ---
 
-        const index = marketItems.value.findIndex(i => i.id === item.id);
-        if (index !== -1) {
-            if (marketItems.value[index].quantity > 1) {
-                marketItems.value[index].quantity--;
-            } else {
-                marketItems.value.splice(index, 1);
-            }
-        }
-        alert(`Purchased ${item.name} for 🪙 ${item.price.toLocaleString()}!`);
-    } else {
-        alert("Not enough coins!");
+// 1. Fetch Market Listings
+export const fetchMarketItems = async (pageNumber = 1, pageSize = 20) => {
+    isLoading.value = true;
+    try {
+        // GET /api/market/listing
+        const data = await api.get<MarketItem[]>(`/market/listing?pageNumber=${pageNumber}&pageSize=${pageSize}`);
+        marketItems.value = data;
+    } catch (error) {
+        console.error("Failed to fetch market items:", error);
+    } finally {
+        isLoading.value = false;
     }
 };
 
-export const sellItem = (newItem: Omit<MarketItem, 'id' | 'seller'>) => {
-    const id = Math.random().toString(36).substring(2, 9);
+// 2. Fetch Player Inventory
+export const fetchInventory = async () => {
+    try {
+        // GET /api/mobile/items
+        const data = await api.get<InventoryItem[]>('/mobile/items');
+        inventory.value = data;
+    } catch (error) {
+        console.error("Failed to fetch inventory:", error);
+    }
+};
 
-    marketItems.value.push({
-        ...newItem,
-        id,
-        seller: 'You'
-    });
+// 3. Fetch Player Data (for Balance)
+export const fetchPlayerData = async () => {
+    try {
+        // GET /api/mobile/me (Assuming this returns game stats like coins)
+        const data = await api.get<any>('/mobile/me');
+        if (data && data.balance !== undefined) {
+            userBalance.value = data.balance;
+        }
+    } catch (error) {
+        console.error("Failed to fetch player data:", error);
+    }
+};
 
-    // For mock purposes: instantly grant the user coins when they list an item
-    const totalEarned = newItem.price * newItem.quantity;
-    userBalance.value += totalEarned;
+// 4. Buy an Item
+export const buyItem = async (listingId: string) => {
+    try {
+        // POST /api/market/{id}/buy
+        await api.post(`/market/${listingId}/buy`, {});
+        alert("Item purchased successfully!");
 
-    alert(`Sold ${newItem.quantity}x ${newItem.name} and earned 🪙 ${totalEarned.toLocaleString()}!`);
+        // Refresh data to reflect the purchase
+        await Promise.all([fetchMarketItems(), fetchInventory(), fetchPlayerData()]);
+    } catch (error: any) {
+        alert(error.message || "Failed to buy item.");
+    }
+};
+
+// 5. Sell an Item (Matches CreateMarketListingDTO)
+export const sellItem = async (itemId: string, price: number) => {
+    try {
+        // POST /api/market/sell
+        await api.post('/market/sell', { itemId, price });
+        alert("Item listed on the market!");
+
+        // Refresh data to show the new listing and remove it from inventory
+        await Promise.all([fetchMarketItems(), fetchInventory()]);
+    } catch (error: any) {
+        alert(error.message || "Failed to list item.");
+    }
 };

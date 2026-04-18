@@ -16,68 +16,67 @@
           <input
               v-model="searchQuery"
               type="text"
-              placeholder="Search items..."
+              placeholder="Search listings..."
               class="px-3 py-2 bg-zinc-800 border border-zinc-700 text-white rounded focus:outline-none focus:border-green-500 transition-colors w-full sm:w-64"
           />
-
-          <select
-              v-model="selectedCategory"
-              class="px-3 py-2 bg-zinc-800 border border-zinc-700 text-white rounded focus:outline-none focus:border-green-500 transition-colors w-full sm:w-auto"
-          >
-            <option value="All">All Categories</option>
-            <option value="Weapons">Weapons</option>
-            <option value="Armor">Armor</option>
-            <option value="Consumables">Consumables</option>
-            <option value="Materials">Materials</option>
-          </select>
         </div>
       </header>
 
       <div v-if="showSellForm" class="mb-6 p-4 bg-zinc-800 border border-zinc-700 rounded-lg animate-fade-in">
-        <h3 class="text-lg font-bold text-white mb-3">List an Item for Sale</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
-          <input v-model="sellForm.name" type="text" placeholder="Item Name" class="px-3 py-2 bg-zinc-900 border border-zinc-700 text-white rounded focus:border-blue-500 outline-none" />
+        <h3 class="text-lg font-bold text-white mb-3">List an Item from your Inventory</h3>
 
-          <select v-model="sellForm.category" class="px-3 py-2 bg-zinc-900 border border-zinc-700 text-white rounded focus:border-blue-500 outline-none">
-            <option value="Weapons">Weapons</option>
-            <option value="Armor">Armor</option>
-            <option value="Consumables">Consumables</option>
-            <option value="Materials">Materials</option>
-          </select>
-
-          <select v-model="sellForm.rarity" class="px-3 py-2 bg-zinc-900 border border-zinc-700 text-white rounded focus:border-blue-500 outline-none">
-            <option value="Common">Common</option>
-            <option value="Uncommon">Uncommon</option>
-            <option value="Rare">Rare</option>
-            <option value="Epic">Epic</option>
-            <option value="Legendary">Legendary</option>
-          </select>
-
-          <input v-model="sellForm.price" type="number" placeholder="Price" min="1" class="px-3 py-2 bg-zinc-900 border border-zinc-700 text-white rounded focus:border-blue-500 outline-none" />
-          <input v-model="sellForm.quantity" type="number" placeholder="Qty" min="1" class="px-3 py-2 bg-zinc-900 border border-zinc-700 text-white rounded focus:border-blue-500 outline-none" />
+        <div v-if="inventory.length === 0" class="text-yellow-500 text-sm mb-3 bg-zinc-900 p-3 rounded border border-zinc-700">
+          Your inventory is empty. Go play the game to find loot before selling!
         </div>
-        <button @click="handleSell" class="mt-4 w-full md:w-auto px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded transition-colors">
-          Confirm Sale
-        </button>
+
+        <div v-else class="flex flex-col sm:flex-row gap-3">
+          <select
+              v-model="sellForm.itemId"
+              class="flex-1 px-3 py-2 bg-zinc-900 border border-zinc-700 text-white rounded focus:border-blue-500 outline-none"
+          >
+            <option value="" disabled>Select item to sell...</option>
+            <option v-for="invItem in inventory" :key="invItem.id" :value="invItem.id">
+              {{ invItem.name || 'Unknown Item' }}
+            </option>
+          </select>
+
+          <div class="relative w-full sm:w-48">
+            <span class="absolute left-3 top-2 text-gray-400">🪙</span>
+            <input
+                v-model="sellForm.price"
+                type="number"
+                placeholder="Price"
+                min="1"
+                class="w-full pl-8 pr-3 py-2 bg-zinc-900 border border-zinc-700 text-white rounded focus:border-blue-500 outline-none"
+            />
+          </div>
+
+          <button
+              @click="handleSell"
+              class="w-full md:w-auto px-6 py-2 bg-green-600 hover:bg-green-500 text-white font-bold rounded transition-colors"
+          >
+            Confirm Sale
+          </button>
+        </div>
       </div>
 
-      <main class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <main class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 relative min-h-[200px]">
+
+        <div v-if="isLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-zinc-900/80 rounded backdrop-blur-sm">
+          <div class="text-white font-bold text-xl animate-pulse">Loading Market Data...</div>
+        </div>
+
         <div
             v-for="item in filteredItems"
             :key="item.id"
-            class="bg-zinc-800 border border-zinc-700 rounded-md p-4 flex flex-col gap-3 hover:-translate-y-1 hover:border-zinc-500 transition-all duration-200 border-l-4 shadow-sm"
-            :class="rarityBorderClass(item.rarity)"
+            class="bg-zinc-800 border border-zinc-700 rounded-md p-4 flex flex-col gap-3 hover:-translate-y-1 hover:border-zinc-500 transition-all duration-200 shadow-sm border-l-4 border-l-zinc-500"
         >
-          <div class="h-16 bg-zinc-900 rounded flex items-center justify-center font-bold text-gray-500">
-            <span>{{ item.quantity }}x</span>
-          </div>
-
           <div class="flex flex-col">
-            <h3 class="text-lg font-semibold text-white m-0">{{ item.name }}</h3>
-            <span class="text-xs uppercase tracking-wider opacity-80" :class="rarityTextClass(item.rarity)">
-              {{ item.rarity }}
+            <h3 class="text-lg font-semibold text-white m-0 truncate" :title="item.name">{{ item.name || 'Unknown Item' }}</h3>
+            <span class="text-xs uppercase tracking-wider opacity-80 text-gray-400 mt-1">
+              Category: {{ getCategoryName(item.category) }}
             </span>
-            <p class="text-sm text-gray-400 mt-1 mb-0">Sold by: {{ item.seller }}</p>
+            <p class="text-sm text-gray-400 mt-1 mb-0 truncate" :title="item.seller">Sold by: {{ item.seller || 'Anonymous' }}</p>
           </div>
 
           <div class="text-xl font-bold text-yellow-400 flex items-center gap-1 mt-auto">
@@ -86,16 +85,14 @@
           </div>
 
           <button
-              @click="buyItem(item)"
-              :disabled="item.seller === 'You'"
-              :class="item.seller === 'You' ? 'bg-zinc-600 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500'"
-              class="w-full py-2 mt-2 text-white font-bold rounded transition-colors focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-50"
+              @click="handleBuy(item.id)"
+              class="bg-blue-600 hover:bg-blue-500 w-full py-2 mt-2 text-white font-bold rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50"
           >
-            {{ item.seller === 'You' ? 'Your Item' : 'Buy' }}
+            Buy Item
           </button>
         </div>
 
-        <div v-if="filteredItems.length === 0" class="col-span-full text-center p-10 text-gray-500 bg-zinc-800/50 rounded-lg border border-dashed border-zinc-700">
+        <div v-if="!isLoading && filteredItems.length === 0" class="col-span-full text-center p-10 text-gray-500 bg-zinc-800/50 rounded-lg border border-dashed border-zinc-700">
           No items found matching your criteria.
         </div>
       </main>
@@ -105,63 +102,67 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { marketItems, buyItem, sellItem, type Category, type Rarity } from '../store'; // Adjust path if needed
+import { ref, computed, onMounted } from 'vue';
+import {
+  marketItems,
+  buyItem,
+  sellItem,
+  isLoading,
+  fetchMarketItems,
+  inventory,
+  fetchInventory,
+  fetchPlayerData,
+  ItemCategory
+} from '../store';
 
-// --- State ---
+// --- Local State ---
 const searchQuery = ref('');
-const selectedCategory = ref<Category>('All');
 const showSellForm = ref(false);
 
 const sellForm = ref({
-  name: '',
-  category: 'Weapons' as Exclude<Category, 'All'>,
-  rarity: 'Common' as Rarity,
-  price: 100,
-  quantity: 1
+  itemId: '',
+  price: 100
+});
+
+// --- Lifecycle Hooks ---
+onMounted(async () => {
+  // Fetch everything needed when the panel loads
+  await Promise.all([
+    fetchMarketItems(),
+    fetchInventory(),
+    fetchPlayerData()
+  ]);
 });
 
 // --- Actions ---
-const handleSell = () => {
-  if (!sellForm.value.name) return alert("Please enter an item name.");
-  if (sellForm.value.price <= 0 || sellForm.value.quantity <= 0) return alert("Price and quantity must be greater than 0.");
+const handleSell = async () => {
+  if (!sellForm.value.itemId) return alert("Please select an item from your inventory.");
+  if (sellForm.value.price <= 0) return alert("Price must be greater than 0.");
 
-  sellItem({ ...sellForm.value });
+  await sellItem(sellForm.value.itemId, sellForm.value.price);
 
-  // Reset form
-  sellForm.value = { name: '', category: 'Weapons', rarity: 'Common', price: 100, quantity: 1 };
+  // Reset form and hide
+  sellForm.value = { itemId: '', price: 100 };
   showSellForm.value = false;
 };
 
-// --- Helpers for Tailwind ---
-const rarityBorderClass = (rarity: Rarity) => {
-  const classes = {
-    Common: 'border-l-gray-400',
-    Uncommon: 'border-l-green-500',
-    Rare: 'border-l-blue-500',
-    Epic: 'border-l-purple-500',
-    Legendary: 'border-l-orange-500'
-  };
-  return classes[rarity];
+const handleBuy = async (listingId: string) => {
+  await buyItem(listingId);
 };
 
-const rarityTextClass = (rarity: Rarity) => {
-  const classes = {
-    Common: 'text-gray-400',
-    Uncommon: 'text-green-500',
-    Rare: 'text-blue-500',
-    Epic: 'text-purple-500',
-    Legendary: 'text-orange-500'
-  };
-  return classes[rarity];
+// --- Helpers ---
+const getCategoryName = (categoryValue: number) => {
+  // Converts backend enum int (0, 1) to readable string
+  return ItemCategory[categoryValue] || 'Unknown';
 };
 
 // --- Computed ---
 const filteredItems = computed(() => {
+  if (!marketItems.value) return [];
+
   return marketItems.value.filter(item => {
-    const matchesCategory = selectedCategory.value === 'All' || item.category === selectedCategory.value;
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.value.toLowerCase());
-    return matchesCategory && matchesSearch;
+    const itemName = item.name || '';
+    return itemName.toLowerCase().includes(searchQuery.value.toLowerCase());
   });
 });
 </script>

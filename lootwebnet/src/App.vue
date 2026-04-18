@@ -1,11 +1,27 @@
 <script setup lang="ts">
-// Import the component you just made
+import { ref, onMounted } from 'vue';
+
+// Import your components
 import MarketplacePanel from './components/MarketplacePanel.vue';
 import Navbar from "@/components/Navbar.vue";
+import Login from './components/login.vue'; // <-- Import the new Login component
+
+// Create a state to track if the user is logged in
+const isLoggedIn = ref(false);
+
+// Check for the token when the app first loads
+onMounted(() => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    isLoggedIn.value = true;
+  }
+});
 </script>
 
 <template>
-  <div class="app-wrapper">
+  <Login v-if="!isLoggedIn" />
+
+  <div v-else class="app-wrapper">
     <Navbar />
     <MarketplacePanel />
   </div>
