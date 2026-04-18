@@ -1,5 +1,4 @@
 // src/components/api.ts
-// (Adjust path depending on where you actually placed it)
 
 const BASE_URL = '/api'; // Vite proxy will route this to https://localhost:7124
 
@@ -25,7 +24,8 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     });
 
     // 5. JWT Refresh Interceptor
-    if (response.status === 401) {
+    // 🚨 THE FIX: Added && !endpoint.includes('/auth/login') so login failures don't trigger a reload
+    if (response.status === 401 && !endpoint.includes('/auth/login')) {
         const refreshToken = localStorage.getItem('refreshToken');
 
         if (refreshToken) {
@@ -34,7 +34,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
                 const refreshRes = await fetch(`${BASE_URL}/auth/refresh`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    // C# DTOs typically expect an object wrapper, adjust if your specific endpoint expects just a string
+                    // Kept your exact object wrapper here!
                     body: JSON.stringify({ refreshToken })
                 });
 
