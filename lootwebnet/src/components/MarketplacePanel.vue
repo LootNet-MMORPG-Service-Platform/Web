@@ -63,7 +63,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 
-// --- Types ---
+
 type Rarity = 'Common' | 'Uncommon' | 'Rare' | 'Epic' | 'Legendary';
 type Category = 'All' | 'Weapons' | 'Armor' | 'Consumables' | 'Materials';
 
@@ -77,12 +77,11 @@ interface MarketItem {
   seller: string;
 }
 
-// --- State ---
+
 const searchQuery = ref('');
 const selectedCategory = ref<Category>('All');
 
-// --- Helpers for Tailwind ---
-// We explicitly map rarities to exact Tailwind classes so PurgeCSS keeps them
+
 const rarityBorderClass = (rarity: Rarity) => {
   const classes = {
     Common: 'border-l-gray-400',
@@ -105,7 +104,7 @@ const rarityTextClass = (rarity: Rarity) => {
   return classes[rarity];
 };
 
-// Mock Data
+
 const marketItems = ref<MarketItem[]>([
   { id: '1', name: 'Iron Sword', category: 'Weapons', rarity: 'Common', price: 150, quantity: 1, seller: 'WarriorBob99' },
   { id: '2', name: 'Health Potion (Large)', category: 'Consumables', rarity: 'Uncommon', price: 45, quantity: 20, seller: 'HealerJane' },
@@ -114,7 +113,6 @@ const marketItems = ref<MarketItem[]>([
   { id: '5', name: 'Excalibur', category: 'Weapons', rarity: 'Legendary', price: 999999, quantity: 1, seller: 'KingArthur' },
 ]);
 
-// --- Computed ---
 const filteredItems = computed(() => {
   return marketItems.value.filter(item => {
     const matchesCategory = selectedCategory.value === 'All' || item.category === selectedCategory.value;
