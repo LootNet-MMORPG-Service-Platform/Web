@@ -6,18 +6,34 @@
         <h2 class="text-2xl font-bold m-0 text-white">Global Trade Market</h2>
 
         <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-center">
+          <div class="flex bg-zinc-800 rounded p-1">
+            <button
+                @click="activeCategory = 'weapons'"
+                :class="['px-4 py-1 rounded transition-colors', activeCategory === 'weapons' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white']"
+            >
+              Weapons
+            </button>
+            <button
+                @click="activeCategory = 'armors'"
+                :class="['px-4 py-1 rounded transition-colors', activeCategory === 'armors' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white']"
+            >
+              Armor
+            </button>
+          </div>
+
           <button
               @click="showSellForm = !showSellForm"
-              class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded transition-colors w-full sm:w-auto"
+              class="px-4 py-2 bg-green-600 hover:bg-green-500 text-white font-bold rounded transition-colors w-full sm:w-auto"
           >
             {{ showSellForm ? 'Cancel Selling' : '+ Sell Item' }}
           </button>
 
           <input
               v-model="searchQuery"
+              @input="handleSearch"
               type="text"
               placeholder="Search listings..."
-              class="px-3 py-2 bg-zinc-800 border border-zinc-700 text-white rounded focus:outline-none focus:border-green-500 transition-colors w-full sm:w-64"
+              class="px-3 py-2 bg-zinc-800 border border-zinc-700 text-white rounded focus:outline-none focus:border-blue-500 transition-colors w-full sm:w-64"
           />
         </div>
       </header>
@@ -35,8 +51,8 @@
               class="flex-1 px-3 py-2 bg-zinc-900 border border-zinc-700 text-white rounded focus:border-blue-500 outline-none"
           >
             <option value="" disabled>Select item to sell...</option>
-            <option v-for="invItem in inventory" :key="invItem.id" :value="invItem.id">
-              {{ invItem.name || 'Unknown Item' }}
+            <option v-for="invItem in inventory" :key="invItem.id || (invItem as any).Id" :value="invItem.id || (invItem as any).Id">
+              {{ invItem.name || (invItem as any).Name || 'Unknown Item' }}
             </option>
           </select>
 
@@ -67,32 +83,39 @@
         </div>
 
         <div
-            v-for="item in filteredItems"
-            :key="item.id"
+            v-for="item in currentItems"
+            :key="item.listingId || (item as any).ListingId"
             class="bg-zinc-800 border border-zinc-700 rounded-md p-4 flex flex-col gap-3 hover:-translate-y-1 hover:border-zinc-500 transition-all duration-200 shadow-sm border-l-4 border-l-zinc-500"
         >
           <div class="flex flex-col">
-            <h3 class="text-lg font-semibold text-white m-0 truncate" :title="item.name">{{ item.name || 'Unknown Item' }}</h3>
-            <span class="text-xs uppercase tracking-wider opacity-80 text-gray-400 mt-1">
-              Category: {{ getCategoryName(item.category) }}
-            </span>
-            <p class="text-sm text-gray-400 mt-1 mb-0 truncate" :title="item.seller">Sold by: {{ item.seller || 'Anonymous' }}</p>
+            <h3 class="text-lg font-semibold text-white m-0 truncate" :title="item.name || (item as any).Name">
+              {{ item.name || (item as any).Name || 'Unknown Item' }}
+            </h3>
+
+            <div class="flex gap-2 mt-2 text-xs text-gray-400 bg-zinc-900 p-2 rounded">
+              <span v-if="activeCategory === 'weapons'">
+                ⚔️ Cut: {{ (item as any).cut ?? (item as any).Cut ?? 0 }} | 🔨 Blunt: {{ (item as any).blunt ?? (item as any).Blunt ?? 0 }}
+              </span>
+              <span v-if="activeCategory === 'armors'">
+                🛡️ Cut Res: {{ (item as any).cutResistance ?? (item as any).CutResistance ?? 0 }} | Blunt Res: {{ (item as any).bluntResistance ?? (item as any).BluntResistance ?? 0 }}
+              </span>
+            </div>
           </div>
 
           <div class="text-xl font-bold text-yellow-400 flex items-center gap-1 mt-auto">
             <span>🪙</span>
-            {{ item.price.toLocaleString() }}
+            {{ ((item as any).price ?? (item as any).Price ?? 0).toLocaleString() }}
           </div>
 
           <button
-              @click="handleBuy(item.id)"
+              @click="handleBuy(item.listingId || (item as any).ListingId)"
               class="bg-blue-600 hover:bg-blue-500 w-full py-2 mt-2 text-white font-bold rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50"
           >
             Buy Item
           </button>
         </div>
 
-        <div v-if="!isLoading && filteredItems.length === 0" class="col-span-full text-center p-10 text-gray-500 bg-zinc-800/50 rounded-lg border border-dashed border-zinc-700">
+        <div v-if="!isLoading && currentItems.length === 0" class="col-span-full text-center p-10 text-gray-500 bg-zinc-800/50 rounded-lg border border-dashed border-zinc-700">
           No items found matching your criteria.
         </div>
       </main>
@@ -102,20 +125,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import {
-  marketItems,
   buyItem,
   sellItem,
   isLoading,
-  fetchMarketItems,
   inventory,
   fetchInventory,
   fetchPlayerData,
-  ItemCategory
+  weapons,
+  armors,
+  fetchWeapons,
+  fetchArmors
 } from '../store';
 
 // --- Local State ---
+const activeCategory = ref<'weapons' | 'armors'>('weapons');
 const searchQuery = ref('');
 const showSellForm = ref(false);
 
@@ -126,12 +151,19 @@ const sellForm = ref({
 
 // --- Lifecycle Hooks ---
 onMounted(async () => {
-  // Fetch everything needed when the panel loads
   await Promise.all([
-    fetchMarketItems(),
+    fetchWeapons({ pageNumber: 1, pageSize: 20 }),
     fetchInventory(),
     fetchPlayerData()
   ]);
+});
+
+watch(activeCategory, async (newCat) => {
+  if (newCat === 'weapons' && weapons.value.length === 0) {
+    await fetchWeapons({ pageNumber: 1, pageSize: 20 });
+  } else if (newCat === 'armors' && armors.value.length === 0) {
+    await fetchArmors({ pageNumber: 1, pageSize: 20 });
+  }
 });
 
 // --- Actions ---
@@ -139,31 +171,37 @@ const handleSell = async () => {
   if (!sellForm.value.itemId) return alert("Please select an item from your inventory.");
   if (sellForm.value.price <= 0) return alert("Price must be greater than 0.");
 
-  await sellItem(sellForm.value.itemId, sellForm.value.price);
+  await sellItem({ itemId: sellForm.value.itemId, price: sellForm.value.price });
 
-  // Reset form and hide
   sellForm.value = { itemId: '', price: 100 };
   showSellForm.value = false;
+
+  if(activeCategory.value === 'weapons') {
+    await fetchWeapons({ pageNumber: 1, pageSize: 20, search: searchQuery.value });
+  } else {
+    await fetchArmors({ pageNumber: 1, pageSize: 20, search: searchQuery.value });
+  }
 };
 
 const handleBuy = async (listingId: string) => {
-  await buyItem(listingId);
+  await buyItem(listingId, activeCategory.value);
 };
 
-// --- Helpers ---
-const getCategoryName = (categoryValue: number) => {
-  // Converts backend enum int (0, 1) to readable string
-  return ItemCategory[categoryValue] || 'Unknown';
+let searchTimeout: ReturnType<typeof setTimeout>;
+const handleSearch = () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    if (activeCategory.value === 'weapons') {
+      fetchWeapons({ pageNumber: 1, pageSize: 20, search: searchQuery.value });
+    } else {
+      fetchArmors({ pageNumber: 1, pageSize: 20, search: searchQuery.value });
+    }
+  }, 500);
 };
 
 // --- Computed ---
-const filteredItems = computed(() => {
-  if (!marketItems.value) return [];
-
-  return marketItems.value.filter(item => {
-    const itemName = item.name || '';
-    return itemName.toLowerCase().includes(searchQuery.value.toLowerCase());
-  });
+const currentItems = computed(() => {
+  return activeCategory.value === 'weapons' ? weapons.value : armors.value;
 });
 </script>
 

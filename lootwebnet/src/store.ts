@@ -1,101 +1,110 @@
 // src/store.ts
 import { ref } from 'vue';
-import { api } from './components/api'; // Make sure you created this file from Step 1!
+import { api } from './components/api';
+import { MarketplaceService } from './services/marketplaceService';
+import type {
+    WeaponMarketDTO,
+    ArmorMarketDTO,
+    WeaponQueryDTO,
+    ArmorQueryDTO,
+    CreateMarketListingDTO
+} from './types/marketplace';
 
-// --- Types & Enums ---
-// Aligned with backend Enum: 0 = Weapons, 1 = Armor, etc. (Expand as needed)
-export enum ItemCategory {
-    Weapons = 0,
-    Armor = 1,
-    Consumables = 2,
-    Materials = 3
-}
-
-export interface MarketItem {
-    id: string; // The listing ID (UUID)
-    itemId: string; // The game item UUID
-    name: string; // Assuming backend returns this, otherwise you may need to map it
-    category: ItemCategory;
-    price: number;
-    seller: string;
-}
-
+// --- Types ---
 export interface InventoryItem {
-    id: string; // The game item UUID in the player's possession
+    id: string;
     name: string;
-    category?: ItemCategory;
+    category?: number;
 }
 
 // --- Global State ---
 export const userBalance = ref(0);
-export const marketItems = ref<MarketItem[]>([]);
+export const weapons = ref<WeaponMarketDTO[]>([]);
+export const armors = ref<ArmorMarketDTO[]>([]);
 export const inventory = ref<InventoryItem[]>([]);
 export const isLoading = ref(false);
 
 // --- Actions ---
 
-// 1. Fetch Market Listings
-export const fetchMarketItems = async (pageNumber = 1, pageSize = 20) => {
+export const fetchWeapons = async (query: WeaponQueryDTO) => {
     isLoading.value = true;
     try {
-        // GET /api/market/listing
-        const data = await api.get<MarketItem[]>(`/market/listing?pageNumber=${pageNumber}&pageSize=${pageSize}`);
-        marketItems.value = data;
+        const result = await MarketplaceService.getWeapons(query);
+        // 🔧 FIX: Check for both 'items' and 'Items' to avoid undefined crashes
+        weapons.value = result?.items || (result as any)?.Items || [];
     } catch (error) {
-        console.error("Failed to fetch market items:", error);
+        console.error("Failed to fetch weapons:", error);
     } finally {
         isLoading.value = false;
     }
 };
 
-// 2. Fetch Player Inventory
+export const fetchArmors = async (query: ArmorQueryDTO) => {
+    isLoading.value = true;
+    try {
+        const result = await MarketplaceService.getArmors(query);
+        // 🔧 FIX: Check for both 'items' and 'Items'
+        armors.value = result?.items || (result as any)?.Items || [];
+    } catch (error) {
+        console.error("Failed to fetch armors:", error);
+    } finally {
+        isLoading.value = false;
+    }
+};
+
 export const fetchInventory = async () => {
     try {
-        // GET /api/mobile/items
         const data = await api.get<InventoryItem[]>('/mobile/items');
-        inventory.value = data;
+        inventory.value = data || [];
     } catch (error) {
         console.error("Failed to fetch inventory:", error);
     }
 };
 
-// 3. Fetch Player Data (for Balance)
 export const fetchPlayerData = async () => {
     try {
-        // GET /api/mobile/me (Assuming this returns game stats like coins)
         const data = await api.get<any>('/mobile/me');
-        if (data && data.balance !== undefined) {
-            userBalance.value = data.balance;
+        if (data) {
+            // 🔧 FIX: Safely check for both casing styles
+            userBalance.value = data.balance ?? data.Balance ?? 0;
         }
     } catch (error) {
         console.error("Failed to fetch player data:", error);
     }
 };
 
-// 4. Buy an Item
-export const buyItem = async (listingId: string) => {
+export const sellItem = async (dto: CreateMarketListingDTO) => {
+    isLoading.value = true;
     try {
-        // POST /api/market/{id}/buy
-        await api.post(`/market/${listingId}/buy`, {});
-        alert("Item purchased successfully!");
-
-        // Refresh data to reflect the purchase
-        await Promise.all([fetchMarketItems(), fetchInventory(), fetchPlayerData()]);
+        await MarketplaceService.createListing(dto);
+        alert("Item listed on the market!");
+        await fetchInventory();
     } catch (error: any) {
-        alert(error.message || "Failed to buy item.");
+        alert(error.response?.data?.message || error.message || "Failed to sell item");
+        console.error(error);
+    } finally {
+        isLoading.value = false;
     }
 };
 
-// 5. Sell an Item (Matches CreateMarketListingDTO)
-export const sellItem = async (itemId: string, price: number) => {
+export const buyItem = async (listingId: string, category: 'weapons' | 'armors') => {
+    isLoading.value = true;
     try {
-        // POST /api/market/sell
-        await api.post('/market/sell', { itemId, price });
-        alert("Item listed on the market!");
+        await MarketplaceService.buyItem(listingId);
 
-        // Refresh data to show the new listing and remove it from inventory
-        await Promise.all([fetchMarketItems(), fetchInventory()]);
+        // 🔧 FIX: Safely filter using both casing styles
+        if (category === 'weapons') {
+            weapons.value = weapons.value.filter(w => (w.listingId || (w as any).ListingId) !== listingId);
+        } else {
+            armors.value = armors.value.filter(a => (a.listingId || (a as any).ListingId) !== listingId);
+        }
+
+        await Promise.all([fetchPlayerData(), fetchInventory()]);
+        alert("Purchase successful!");
     } catch (error: any) {
-        alert(error.message || "Failed to list item.");
+        alert(error.response?.data?.message || error.message || "Failed to buy item");
+        console.error(error);
+    } finally {
+        isLoading.value = false;
     }
 };
