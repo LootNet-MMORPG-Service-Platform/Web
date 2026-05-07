@@ -1,21 +1,7 @@
 <script setup lang="ts">
-
-import MarketplacePanel from './components/MarketplacePanel.vue';
+import { RouterView } from 'vue-router'
 </script>
+
 <template>
-  <div class="app-wrapper">
-    <MarketplacePanel />
-  </div>
+  <RouterView />
 </template>
-
-<style>
-
-body {
-  margin: 0;
-  padding: 0;
-  background-color: #121212; 
-}
-.app-wrapper {
-  padding: 2rem;
-}
-</style>
