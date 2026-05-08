@@ -53,8 +53,9 @@ const createListing = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen w-full bg-zinc-950 p-4 text-gray-200">
-    <div class="max-w-7xl mx-auto bg-zinc-900 border border-zinc-800 rounded-lg shadow-2xl p-6 space-y-6">
+  <div class="min-h-screen w-full bg-zinc-950 p-4 text-gray-200 flex justify-center items-center">
+
+    <div class="w-full max-w-7xl mx-auto bg-zinc-900 border border-zinc-800 rounded-lg shadow-2xl p-6">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <h1 class="text-2xl font-bold text-white">Marketplace · Sell</h1>
         <div class="inline-flex bg-zinc-800 rounded p-1">

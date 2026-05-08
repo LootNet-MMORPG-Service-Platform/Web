@@ -213,8 +213,8 @@ const txPages = computed(() => Math.max(1, Math.ceil(txTotal.value / txPageSize.
 </script>
 
 <template>
-  <div class="min-h-screen w-full bg-zinc-950 p-4 text-gray-200">
-    <div class="max-w-7xl mx-auto p-6 bg-zinc-900 border border-zinc-800 rounded-lg shadow-2xl space-y-5">
+  <div class="min-h-screen w-full bg-zinc-950 p-4 text-gray-200 flex justify-center items-center">
+    <div class="w-full max-w-7xl mx-auto bg-zinc-900 border border-zinc-800 rounded-lg shadow-2xl p-6">
       <div class="flex items-center justify-between">
         <h1 class="text-3xl font-bold text-white">Player Dashboard</h1>
         <div class="flex items-center gap-4">

@@ -129,8 +129,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen w-full bg-zinc-950 p-4 text-gray-200">
-    <div class="max-w-6xl mx-auto bg-zinc-900 border border-zinc-800 rounded-lg p-6 space-y-4">
+  <div class="min-h-screen w-full bg-zinc-950 p-4 text-gray-200 flex justify-center items-center">
+    <div class="w-full max-w-7xl mx-auto bg-zinc-900 border border-zinc-800 rounded-lg shadow-2xl p-6">
       <div class="flex items-center justify-between gap-3">
         <h1 class="text-2xl font-bold text-white inline-flex items-center gap-2"><MessageCircle class="w-6 h-6 text-blue-400" /> Chat</h1>
         <div class="inline-flex bg-zinc-800 rounded p-1">
