@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { Coins, UserCircle2 } from 'lucide-vue-next'
 import { fetchPlayerData, userBalance } from '../store'
 import { api } from '../services/api'
@@ -9,6 +9,7 @@ import { stopRealtime } from '../services/realtimeService'
 import { toAssetUrl } from '../services/urls'
 
 const router = useRouter()
+const route = useRoute() 
 const isMobileMenuOpen = ref(false)
 const profileImagePath = ref('')
 const isDailyLoading = ref(false)
@@ -90,9 +91,18 @@ const handleLogout = async () => {
       </div>
 
       <div class="hidden md:flex items-center gap-6">
-        <RouterLink to="/market/buy" class="text-green-500 font-semibold transition-colors">Market</RouterLink>
-        <RouterLink to="/dashboard" class="text-gray-400 hover:text-green-500 font-semibold transition-colors">Player Dashboard</RouterLink>
-        <RouterLink to="/chat" class="text-gray-400 hover:text-green-500 font-semibold transition-colors">Chat</RouterLink>
+        <RouterLink
+            to="/market/buy"
+            :class="['font-semibold transition-colors', route.path.startsWith('/market') ? 'text-green-500 drop-shadow-[0_0_5px_rgba(34,197,94,0.3)]' : 'text-gray-400 hover:text-green-500']"
+        >Market</RouterLink>
+        <RouterLink
+            to="/dashboard"
+            :class="['font-semibold transition-colors', route.path.startsWith('/dashboard') ? 'text-green-500 drop-shadow-[0_0_5px_rgba(34,197,94,0.3)]' : 'text-gray-400 hover:text-green-500']"
+        >Player Dashboard</RouterLink>
+        <RouterLink
+            to="/chat"
+            :class="['font-semibold transition-colors', route.path.startsWith('/chat') ? 'text-green-500 drop-shadow-[0_0_5px_rgba(34,197,94,0.3)]' : 'text-gray-400 hover:text-green-500']"
+        >Chat</RouterLink>
 
         <div class="flex items-center gap-4 ml-5 pl-5 border-l border-zinc-700">
           <span class="text-yellow-400 font-bold transition-all duration-300 inline-flex items-center gap-1">
@@ -100,9 +110,9 @@ const handleLogout = async () => {
             {{ userBalance.toLocaleString() }}
           </span>
           <button
-            class="px-3 py-1.5 rounded bg-yellow-600 hover:bg-yellow-500 disabled:opacity-50 text-sm font-semibold text-zinc-950"
-            :disabled="isDailyLoading"
-            @click="claimDaily"
+              class="px-3 py-1.5 rounded bg-yellow-600 hover:bg-yellow-500 disabled:opacity-50 text-sm font-semibold text-zinc-950"
+              :disabled="isDailyLoading"
+              @click="claimDaily"
           >
             Daily
           </button>
@@ -118,9 +128,9 @@ const handleLogout = async () => {
       </div>
 
       <button
-        class="md:hidden flex flex-col justify-around w-7 h-6 bg-transparent border-none cursor-pointer z-10"
-        @click="toggleMenu"
-        aria-label="Toggle menu"
+          class="md:hidden flex flex-col justify-around w-7 h-6 bg-transparent border-none cursor-pointer z-10"
+          @click="toggleMenu"
+          aria-label="Toggle menu"
       >
         <span class="w-full h-[3px] bg-gray-200 rounded transition-all duration-300 origin-[1px]" :class="{ 'rotate-45': isMobileMenuOpen }"></span>
         <span class="w-full h-[3px] bg-gray-200 rounded transition-all duration-300" :class="{ 'opacity-0 translate-x-5': isMobileMenuOpen }"></span>
@@ -129,12 +139,24 @@ const handleLogout = async () => {
     </div>
 
     <div
-      class="md:hidden flex flex-col bg-zinc-800 overflow-hidden transition-all duration-300 ease-in-out"
-      :class="isMobileMenuOpen ? 'max-h-64 border-b border-zinc-700' : 'max-h-0'"
+        class="md:hidden flex flex-col bg-zinc-800 overflow-hidden transition-all duration-300 ease-in-out"
+        :class="isMobileMenuOpen ? 'max-h-64 border-b border-zinc-700' : 'max-h-0'"
     >
-      <RouterLink to="/market/buy" class="px-5 py-4 text-gray-200 font-semibold border-b border-zinc-700 hover:bg-zinc-700 hover:text-green-500" @click="closeMenu">Market</RouterLink>
-      <RouterLink to="/dashboard" class="px-5 py-4 text-gray-200 font-semibold border-b border-zinc-700 hover:bg-zinc-700 hover:text-green-500" @click="closeMenu">Player Dashboard</RouterLink>
-      <RouterLink to="/chat" class="px-5 py-4 text-gray-200 font-semibold border-b border-zinc-700 hover:bg-zinc-700 hover:text-green-500" @click="closeMenu">Chat</RouterLink>
+      <RouterLink
+          to="/market/buy"
+          @click="closeMenu"
+          :class="['px-5 py-4 font-semibold border-b border-zinc-700 hover:bg-zinc-700 hover:text-green-500 transition-colors', route.path.startsWith('/market') ? 'text-green-500 bg-zinc-700/50' : 'text-gray-200']"
+      >Market</RouterLink>
+      <RouterLink
+          to="/dashboard"
+          @click="closeMenu"
+          :class="['px-5 py-4 font-semibold border-b border-zinc-700 hover:bg-zinc-700 hover:text-green-500 transition-colors', route.path.startsWith('/dashboard') ? 'text-green-500 bg-zinc-700/50' : 'text-gray-200']"
+      >Player Dashboard</RouterLink>
+      <RouterLink
+          to="/chat"
+          @click="closeMenu"
+          :class="['px-5 py-4 font-semibold border-b border-zinc-700 hover:bg-zinc-700 hover:text-green-500 transition-colors', route.path.startsWith('/chat') ? 'text-green-500 bg-zinc-700/50' : 'text-gray-200']"
+      >Chat</RouterLink>
 
       <div class="px-5 py-4 border-b border-zinc-700 flex justify-between items-center">
         <div class="flex items-center gap-3">
