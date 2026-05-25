@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { MessageCircle, Send } from 'lucide-vue-next'
 import { MarketplaceService } from '../services/marketplaceService'
 import { onRealtimeEvent } from '../services/realtimeService'
+import { toAssetUrl } from '../services/urls'
 import type { ChatConversationDTO, ChatMessageDTO } from '../types/marketplace'
 
 const route = useRoute()
@@ -151,7 +152,7 @@ onUnmounted(() => {
             @click="openPrivate(c.userId)"
           >
             <div class="flex items-center gap-2 text-sm">
-              <img v-if="c.profileImagePath" :src="c.profileImagePath" class="w-6 h-6 rounded-full object-cover border border-zinc-600" />
+              <img v-if="c.profileImagePath" :src="toAssetUrl(c.profileImagePath)" class="w-6 h-6 rounded-full object-cover border border-zinc-600" />
               <RouterLink :to="`/users/${c.userId}`" class="font-semibold text-zinc-100 hover:text-blue-300">{{ c.username }}</RouterLink>
             </div>
             <p class="text-xs text-zinc-400 mt-1 truncate">{{ c.lastMessageText }}</p>
@@ -162,7 +163,7 @@ onUnmounted(() => {
           <div v-if="!activeConversation" class="text-zinc-400 text-sm">Select a conversation or open chat from a user profile.</div>
           <article v-for="m in privateMessages" :key="m.id" class="bg-zinc-900/80 border border-zinc-700 rounded p-2">
             <div class="flex items-center gap-2 text-xs text-zinc-400">
-              <img v-if="m.senderProfileImagePath" :src="m.senderProfileImagePath" class="w-5 h-5 rounded-full object-cover border border-zinc-600" />
+              <img v-if="m.senderProfileImagePath" :src="toAssetUrl(m.senderProfileImagePath)" class="w-5 h-5 rounded-full object-cover border border-zinc-600" />
               <RouterLink :to="`/users/${m.senderId}`" class="text-zinc-200 font-semibold hover:text-blue-300">{{ m.senderUsername }}</RouterLink>
               <span>{{ new Date(m.createdAt).toLocaleString() }}</span>
             </div>
@@ -174,7 +175,7 @@ onUnmounted(() => {
       <div v-else class="bg-zinc-800 border border-zinc-700 rounded p-3 h-[460px] overflow-auto space-y-2">
         <article v-for="m in globalMessages" :key="m.id" class="bg-zinc-900/80 border border-zinc-700 rounded p-2">
           <div class="flex items-center gap-2 text-xs text-zinc-400">
-            <img v-if="m.senderProfileImagePath" :src="m.senderProfileImagePath" class="w-5 h-5 rounded-full object-cover border border-zinc-600" />
+            <img v-if="m.senderProfileImagePath" :src="toAssetUrl(m.senderProfileImagePath)" class="w-5 h-5 rounded-full object-cover border border-zinc-600" />
             <RouterLink :to="`/users/${m.senderId}`" class="text-zinc-200 font-semibold hover:text-blue-300">{{ m.senderUsername }}</RouterLink>
             <span>{{ new Date(m.createdAt).toLocaleString() }}</span>
           </div>

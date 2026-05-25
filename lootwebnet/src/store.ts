@@ -77,9 +77,9 @@ export const fetchInventory = async () => {
 
 export const fetchPlayerData = async () => {
     try {
-        const data = await api.get<any>('/mobile/me');
+        const data = await MarketplaceService.getProfile();
         if (data) {
-            userBalance.value = Number(data.currency ?? data.Currency ?? data.balance ?? data.Balance ?? 0);
+            userBalance.value = Number(data.currency ?? 0);
         }
     } catch (error) {
         console.error("Failed to fetch player data:", error);

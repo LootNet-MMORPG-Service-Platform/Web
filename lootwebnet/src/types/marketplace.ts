@@ -123,6 +123,8 @@ export interface MarketTransactionDTO {
     itemId: string;
     itemName: string;
     price: number;
+    taxAmount: number;
+    sellerPayout: number;
     timestamp: string;
     isSale: boolean;
     counterpartyUsername: string;
@@ -156,4 +158,90 @@ export interface MarketTransactionsSummaryDTO {
 export interface MyListingsSummaryDTO {
     totalItemsListed: number;
     totalListedValue: number;
+}
+
+export interface UserProfileDTO {
+    username: string;
+    currency: number;
+    role: number;
+    profileImagePath?: string | null;
+}
+
+export interface MarketSaleTaxDTO {
+    grossPrice: number;
+    taxAmount: number;
+    sellerPayout: number;
+    effectiveTaxRate: number;
+}
+
+export interface BotSaleOfferDTO {
+    itemId: string;
+    itemName: string;
+    category: ItemCategory;
+    statScore: number;
+    offeredPrice: number;
+    taxAmount: number;
+    sellerPayout: number;
+}
+
+export interface BotSaleResultDTO {
+    itemId: string;
+    itemName: string;
+    category: ItemCategory;
+    paidAmount: number;
+    currencyAfterSale: number;
+}
+
+export interface ItemRewardDTO {
+    id: string;
+    name: string;
+    category: ItemCategory;
+    currencyReward: number;
+    currencyAfterReward: number;
+}
+
+export interface WebDailyRewardDTO {
+    currencyReward: number;
+    currencyAfterReward: number;
+}
+
+export interface MarketTaxBracketDTO {
+    from: number;
+    to?: number | null;
+    rate: number;
+}
+
+export interface MarketEconomyDTO {
+    dailyCurrencyReward: number;
+    botBasePrice: number;
+    botStatMultiplier: number;
+    botElementMultiplier: number;
+    isPlayerToPlayerTaxEnabled: boolean;
+    isPlayerToBotTaxEnabled: boolean;
+    botSaleFormula: string;
+    progressiveTaxBrackets: MarketTaxBracketDTO[];
+}
+
+export interface SellInventoryQueryDTO {
+    itemType: 'all' | 'weapon' | 'armor';
+    search?: string;
+    sortBy: 'power' | 'name';
+    sortDirection: SortDirection;
+    pageNumber: number;
+    pageSize: number;
+}
+
+export interface SellInventoryItemDTO {
+    id: string;
+    name: string;
+    category: ItemCategory;
+    itemKind: 'weapon' | 'armor';
+    weaponType?: WeaponType | null;
+    armorType?: ArmorType | null;
+    cut?: number | null;
+    blunt?: number | null;
+    cutResistance?: number | null;
+    bluntResistance?: number | null;
+    powerScore: number;
+    elements: ItemElementDTO[];
 }

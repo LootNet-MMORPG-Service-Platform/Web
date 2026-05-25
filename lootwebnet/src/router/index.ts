@@ -6,6 +6,8 @@ import DashboardView from '../views/DashboardView.vue'
 import ChatView from '../views/ChatView.vue'
 import UserMarketplaceView from '../views/UserMarketplaceView.vue'
 import ErrorView from '../views/ErrorView.vue'
+import ResetPasswordView from '../views/ResetPasswordView.vue'
+import VerifyEmailView from '../views/VerifyEmailView.vue'
 import AuthenticatedLayout from '../layouts/AuthenticatedLayout.vue'
 
 const isAuthenticated = () => Boolean(localStorage.getItem('token'))
@@ -15,6 +17,8 @@ const router = createRouter({
   routes: [
     { path: '/', redirect: () => (isAuthenticated() ? '/market/buy' : '/login') },
     { path: '/login', name: 'login', component: LoginView, meta: { public: true } },
+    { path: '/verify-email', name: 'verify-email', component: VerifyEmailView, meta: { public: true } },
+    { path: '/reset-password', name: 'reset-password', component: ResetPasswordView, meta: { public: true } },
     { path: '/error', name: 'error', component: ErrorView, meta: { public: true } },
     {
       path: '/',

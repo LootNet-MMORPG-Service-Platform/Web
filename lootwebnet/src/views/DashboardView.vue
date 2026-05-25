@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { Coins, Crop, History, ScrollText, Shield, Sparkles, Sword } from 'lucide-vue-next'
 import { MarketplaceService } from '../services/marketplaceService'
-import { api } from '../services/api'
+import { toAssetUrl } from '../services/urls'
 import type {
   MarketTransactionDTO,
   MarketTransactionsQueryDTO,
@@ -18,6 +18,7 @@ const activeTab = ref<'listings' | 'transactions'>('listings')
 const isLoading = ref(false)
 const errorMessage = ref('')
 const profileImagePath = ref('')
+const profileImageUrl = computed(() => toAssetUrl(profileImagePath.value))
 const cropSource = ref('')
 const cropPreview = ref('')
 const cropScale = ref(1)
@@ -50,8 +51,8 @@ const fmtDate = (v: string) => new Date(v).toLocaleString()
 
 const loadProfile = async () => {
   try {
-    const me = await api.get<any>('/mobile/me')
-    profileImagePath.value = String(me?.profileImagePath ?? me?.ProfileImagePath ?? '')
+    const me = await MarketplaceService.getProfile()
+    profileImagePath.value = String(me?.profileImagePath ?? '')
   } catch {
     profileImagePath.value = ''
   }
@@ -106,6 +107,9 @@ const uploadCroppedPfp = async () => {
   })
   const res = await MarketplaceService.uploadProfilePicture(file)
   profileImagePath.value = res.profileImagePath
+  window.dispatchEvent(new CustomEvent('lootnet:profile-image-updated', {
+    detail: { profileImagePath: res.profileImagePath }
+  }))
   cropSource.value = ''
   cropPreview.value = ''
 }
@@ -223,7 +227,7 @@ const txPages = computed(() => Math.max(1, Math.ceil(txTotal.value / txPageSize.
             <button class="px-4 py-2 rounded" :class="activeTab === 'transactions' ? 'bg-blue-600 text-white' : 'text-zinc-300'" @click="activeTab = 'transactions'">Transactions</button>
           </div>
           <div class="flex items-center gap-2">
-            <img v-if="profileImagePath" :src="profileImagePath" alt="Profile image" class="w-10 h-10 rounded-full object-cover border border-zinc-700" />
+            <img v-if="profileImageUrl" :src="profileImageUrl" alt="Profile image" class="w-10 h-10 rounded-full object-cover border border-zinc-700" />
             <div v-else class="w-10 h-10 rounded-full bg-zinc-800 border border-zinc-700"></div>
             <label class="px-3 py-2 text-sm rounded bg-zinc-800 border border-zinc-700 cursor-pointer hover:bg-zinc-700">
               Change PFP
@@ -331,8 +335,11 @@ const txPages = computed(() => Math.max(1, Math.ceil(txTotal.value / txPageSize.
           <div v-if="isLoading" class="text-zinc-400 animate-pulse">Loading...</div>
           <article v-for="t in transactions" :key="t.transactionId" class="bg-zinc-800 border border-zinc-700 rounded p-3">
             <div class="flex items-start justify-between gap-4">
-              <div><h3 class="text-white font-semibold">{{ t.itemName }}</h3><p class="text-xs mt-1" :class="t.isSale ? 'text-green-400' : 'text-blue-400'">{{ t.isSale ? 'Sold to ' : 'Bought from ' }}<RouterLink :to="`/users/${t.counterpartyUserId}`" class="underline">{{ t.counterpartyUsername }}</RouterLink></p><p class="text-xs text-zinc-500 mt-1">{{ fmtDate(t.timestamp) }}</p></div>
-              <div class="text-yellow-400 font-bold inline-flex items-center gap-1"><Coins class="w-4 h-4" /> {{ Number(t.price).toLocaleString() }}</div>
+              <div><h3 class="text-white font-semibold">{{ t.itemName }}</h3><p class="text-xs mt-1" :class="t.isSale ? 'text-green-400' : 'text-blue-400'">{{ t.isSale ? 'Sold to ' : 'Bought from ' }}<span v-if="t.counterpartyUsername === 'LootNet Bot'">{{ t.counterpartyUsername }}</span><RouterLink v-else :to="`/users/${t.counterpartyUserId}`" class="underline">{{ t.counterpartyUsername }}</RouterLink></p><p class="text-xs text-zinc-500 mt-1">{{ fmtDate(t.timestamp) }}</p></div>
+              <div class="text-right">
+                <div class="text-yellow-400 font-bold inline-flex items-center gap-1"><Coins class="w-4 h-4" /> {{ Number(t.price).toLocaleString() }}</div>
+                <div v-if="t.isSale" class="text-xs text-zinc-500">Net {{ Number(t.sellerPayout ?? t.price).toLocaleString() }} · Tax {{ Number(t.taxAmount ?? 0).toLocaleString() }}</div>
+              </div>
             </div>
           </article>
         </div>

@@ -1,31 +1,47 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Coins, UserCircle2 } from 'lucide-vue-next'
 import { fetchPlayerData, userBalance } from '../store'
 import { api } from '../services/api'
+import { MarketplaceService } from '../services/marketplaceService'
 import { stopRealtime } from '../services/realtimeService'
+import { toAssetUrl } from '../services/urls'
 
 const router = useRouter()
 const isMobileMenuOpen = ref(false)
 const profileImagePath = ref('')
+const isDailyLoading = ref(false)
 const profileImageUrl = computed(() => {
-  const path = profileImagePath.value
-  return path ? `${path}?t=${Date.now()}` : ''
+  const path = toAssetUrl(profileImagePath.value)
+  return path ? `${path}${path.includes('?') ? '&' : '?'}t=${profileImageVersion.value}` : ''
 })
+const profileImageVersion = ref(Date.now())
 
 const loadNavbarData = async () => {
   await fetchPlayerData()
   try {
-    const me = await api.get<any>('/mobile/me')
-    profileImagePath.value = String(me?.profileImagePath ?? me?.ProfileImagePath ?? '')
+    const me = await MarketplaceService.getProfile()
+    profileImagePath.value = String(me?.profileImagePath ?? '')
+    profileImageVersion.value = Date.now()
   } catch {
     profileImagePath.value = ''
   }
 }
 
+const handleProfileImageUpdated = (event: Event) => {
+  const detail = (event as CustomEvent<{ profileImagePath?: string }>).detail
+  profileImagePath.value = String(detail?.profileImagePath ?? '')
+  profileImageVersion.value = Date.now()
+}
+
 onMounted(() => {
   void loadNavbarData()
+  window.addEventListener('lootnet:profile-image-updated', handleProfileImageUpdated)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('lootnet:profile-image-updated', handleProfileImageUpdated)
 })
 
 const toggleMenu = () => {
@@ -34,6 +50,19 @@ const toggleMenu = () => {
 
 const closeMenu = () => {
   isMobileMenuOpen.value = false
+}
+
+const claimDaily = async () => {
+  isDailyLoading.value = true
+  try {
+    const reward = await MarketplaceService.claimDaily()
+    await fetchPlayerData()
+    window.alert(`Daily claimed: ${Number(reward.currencyReward).toLocaleString()} gold.`)
+  } catch (e: any) {
+    window.alert(e?.message || 'Daily already claimed or unavailable.')
+  } finally {
+    isDailyLoading.value = false
+  }
 }
 
 const handleLogout = async () => {
@@ -70,6 +99,13 @@ const handleLogout = async () => {
             <Coins class="w-4 h-4" aria-hidden="true" />
             {{ userBalance.toLocaleString() }}
           </span>
+          <button
+            class="px-3 py-1.5 rounded bg-yellow-600 hover:bg-yellow-500 disabled:opacity-50 text-sm font-semibold text-zinc-950"
+            :disabled="isDailyLoading"
+            @click="claimDaily"
+          >
+            Daily
+          </button>
           <div class="w-9 h-9 rounded-full border-2 border-zinc-500 overflow-hidden flex items-center justify-center bg-zinc-800">
             <img v-if="profileImageUrl" :src="profileImageUrl" alt="PFP" class="w-full h-full object-cover" />
             <UserCircle2 v-else class="w-6 h-6 text-zinc-400" />
@@ -101,10 +137,19 @@ const handleLogout = async () => {
       <RouterLink to="/chat" class="px-5 py-4 text-gray-200 font-semibold border-b border-zinc-700 hover:bg-zinc-700 hover:text-green-500" @click="closeMenu">Chat</RouterLink>
 
       <div class="px-5 py-4 border-b border-zinc-700 flex justify-between items-center">
-        <span class="text-yellow-400 font-bold inline-flex items-center gap-1">
-          <Coins class="w-4 h-4" aria-hidden="true" />
-          {{ userBalance.toLocaleString() }}
-        </span>
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full border-2 border-zinc-500 overflow-hidden flex items-center justify-center bg-zinc-900">
+            <img v-if="profileImageUrl" :src="profileImageUrl" alt="PFP" class="w-full h-full object-cover" />
+            <UserCircle2 v-else class="w-6 h-6 text-zinc-400" />
+          </div>
+          <span class="text-yellow-400 font-bold inline-flex items-center gap-1">
+            <Coins class="w-4 h-4" aria-hidden="true" />
+            {{ userBalance.toLocaleString() }}
+          </span>
+        </div>
+        <button class="px-3 py-1.5 rounded bg-yellow-600 disabled:opacity-50 text-zinc-950 font-semibold" :disabled="isDailyLoading" @click="claimDaily">
+          Daily
+        </button>
         <button @click="handleLogout" class="text-red-400 hover:text-red-300 font-semibold transition-colors">Logout</button>
       </div>
     </div>

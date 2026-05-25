@@ -1,11 +1,12 @@
 import { HubConnection, HubConnectionBuilder, HubConnectionState, LogLevel } from '@microsoft/signalr'
+import { HUB_URL } from './urls'
 
 let connection: HubConnection | null = null
 const listeners = new Set<(payload: any) => void>()
 
 function buildConnection() {
   return new HubConnectionBuilder()
-    .withUrl('/hub', {
+    .withUrl(HUB_URL, {
       accessTokenFactory: () => localStorage.getItem('token') ?? ''
     })
     .withAutomaticReconnect()

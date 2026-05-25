@@ -5,6 +5,7 @@ import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import tailwindcss from '@tailwindcss/vite'
 
+const backendTarget = process.env.VITE_API_TARGET ?? 'https://lootnet-api.onrender.com'
 
 export default defineConfig({
   plugins: [
@@ -21,18 +22,18 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://localhost:7124',
+        target: backendTarget,
         changeOrigin: true,
         secure: false,
       },
       '/hub': {
-        target: 'https://localhost:7124',
+        target: backendTarget,
         changeOrigin: true,
         secure: false,
         ws: true,
       },
       '/uploads': {
-        target: 'https://localhost:7124',
+        target: backendTarget,
         changeOrigin: true,
         secure: false,
       }

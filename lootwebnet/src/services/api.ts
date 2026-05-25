@@ -1,6 +1,7 @@
 import { navigateToError, navigateToLogin } from '../router/navigation'
+import { API_BASE_URL } from './urls'
 
-const BASE_URL = '/api'
+const BASE_URL = API_BASE_URL
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers)
@@ -76,6 +77,10 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   const raw = await response.text()
   if (!raw || raw.trim().length === 0)
     return undefined as T
+
+  const contentType = response.headers.get('content-type') ?? ''
+  if (!contentType.includes('application/json'))
+    return raw as T
 
   return JSON.parse(raw) as T
 }

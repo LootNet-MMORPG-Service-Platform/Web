@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { Coins, Shield, Sparkles, Sword } from 'lucide-vue-next'
 import { MarketplaceService } from '../services/marketplaceService'
+import { toAssetUrl } from '../services/urls'
 import type { ArmorMarketDTO, ArmorQueryDTO, PagedResultDTO, WeaponMarketDTO, WeaponQueryDTO } from '../types/marketplace'
 import { ArmorSortColumns, ItemElementType, SortDirection, WeaponSortColumns } from '../types/marketplace'
 import { buyItem, fetchPlayerData } from '../store'
@@ -215,7 +216,7 @@ const toggleArmorType = (idx: number) => {
               {{ tab === 'weapons' ? weaponTypeNames[Number((item as any).weaponType)] : armorTypeNames[Number((item as any).armorType)] }}
             </p>
             <div class="text-xs text-zinc-400 inline-flex items-center gap-2">
-              <img v-if="(item as any).sellerProfileImagePath" :src="(item as any).sellerProfileImagePath" class="w-5 h-5 rounded-full object-cover border border-zinc-600" />
+              <img v-if="(item as any).sellerProfileImagePath" :src="toAssetUrl((item as any).sellerProfileImagePath)" class="w-5 h-5 rounded-full object-cover border border-zinc-600" />
               <RouterLink :to="`/users/${(item as any).sellerId || ''}`" class="hover:text-blue-300">Seller: {{ (item as any).sellerUsername || 'Unknown' }}</RouterLink>
             </div>
           </div>

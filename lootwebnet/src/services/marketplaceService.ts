@@ -3,7 +3,8 @@ import { api } from './api';
 import type {
     WeaponQueryDTO, ArmorQueryDTO, PagedResultDTO,
     WeaponMarketDTO, ArmorMarketDTO, CreateMarketListingDTO, MyMarketListingDTO, MarketTransactionDTO, MyListingsQueryDTO,
-    MarketTransactionsQueryDTO, MarketTransactionsSummaryDTO, MyListingsSummaryDTO, ChatConversationDTO, ChatMessageDTO
+    MarketTransactionsQueryDTO, MarketTransactionsSummaryDTO, MyListingsSummaryDTO, ChatConversationDTO, ChatMessageDTO,
+    UserProfileDTO, MarketEconomyDTO, MarketSaleTaxDTO, BotSaleOfferDTO, BotSaleResultDTO, WebDailyRewardDTO, SellInventoryItemDTO, SellInventoryQueryDTO
 } from '../types/marketplace';
 
 export const MarketplaceService = {
@@ -58,6 +59,42 @@ export const MarketplaceService = {
         return await api.get<MyListingsSummaryDTO>('/market/me/listings/summary');
     },
 
+    async getProfile(): Promise<UserProfileDTO> {
+        return await api.get<UserProfileDTO>('/market/me');
+    },
+
+    async getSellInventory(query: SellInventoryQueryDTO): Promise<PagedResultDTO<SellInventoryItemDTO>> {
+        const params = new URLSearchParams({
+            itemType: query.itemType,
+            sortBy: query.sortBy,
+            sortDirection: String(query.sortDirection),
+            pageNumber: String(query.pageNumber),
+            pageSize: String(query.pageSize)
+        });
+        if (query.search?.trim()) params.set('search', query.search.trim());
+        return await api.get<PagedResultDTO<SellInventoryItemDTO>>(`/market/sell/inventory?${params.toString()}`);
+    },
+
+    async getEconomy(): Promise<MarketEconomyDTO> {
+        return await api.get<MarketEconomyDTO>('/market/economy');
+    },
+
+    async getTaxPreview(price: number): Promise<MarketSaleTaxDTO> {
+        return await api.get<MarketSaleTaxDTO>(`/market/tax-preview?price=${encodeURIComponent(price)}`);
+    },
+
+    async getBotSaleOffer(itemId: string): Promise<BotSaleOfferDTO> {
+        return await api.post<BotSaleOfferDTO>('/market/bot/quote', { itemId });
+    },
+
+    async sellItemToBot(itemId: string): Promise<BotSaleResultDTO> {
+        return await api.post<BotSaleResultDTO>('/market/bot/sell', { itemId });
+    },
+
+    async claimDaily(): Promise<WebDailyRewardDTO> {
+        return await api.post<WebDailyRewardDTO>('/market/daily', {});
+    },
+
     async changeListingPrice(listingId: string, price: number): Promise<void> {
         return await api.post(`/market/${listingId}/change-price`, { price });
     },
@@ -69,7 +106,7 @@ export const MarketplaceService = {
     async uploadProfilePicture(file: File): Promise<{ profileImagePath: string }> {
         const form = new FormData();
         form.append('file', file);
-        return await api.postForm<{ profileImagePath: string }>('/mobile/me/pfp', form);
+        return await api.postForm<{ profileImagePath: string }>('/market/me/pfp', form);
     },
 
     async getGlobalChat(pageNumber = 1, pageSize = 30): Promise<PagedResultDTO<ChatMessageDTO>> {

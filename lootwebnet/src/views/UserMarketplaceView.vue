@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Coins, MessageCircle, Shield, Sparkles, Sword } from 'lucide-vue-next'
 import { MarketplaceService } from '../services/marketplaceService'
+import { toAssetUrl } from '../services/urls'
 import { ItemCategory } from '../types/marketplace'
 import type { MyMarketListingDTO, PagedResultDTO } from '../types/marketplace'
 
@@ -11,6 +12,7 @@ const router = useRouter()
 const userId = String(route.params.userId || '')
 const username = ref('')
 const profileImagePath = ref('')
+const profileImageUrl = computed(() => toAssetUrl(profileImagePath.value))
 const listings = ref<MyMarketListingDTO[]>([])
 const totalCount = ref(0)
 
@@ -43,7 +45,7 @@ onMounted(() => { void load() })
     <div class="max-w-6xl mx-auto bg-zinc-900 border border-zinc-800 rounded-lg p-6 space-y-4">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <img v-if="profileImagePath" :src="profileImagePath" class="w-12 h-12 rounded-full object-cover border border-zinc-700" />
+          <img v-if="profileImageUrl" :src="profileImageUrl" class="w-12 h-12 rounded-full object-cover border border-zinc-700" />
           <div v-else class="w-12 h-12 rounded-full bg-zinc-800 border border-zinc-700"></div>
           <div>
             <h1 class="text-2xl font-bold text-white">{{ username }}</h1>
