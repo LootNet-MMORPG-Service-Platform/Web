@@ -27,6 +27,7 @@ const maxBlunt = ref<number | null>(null)
 const selectedElements = ref<ItemElementType[]>([])
 const selectedWeaponTypes = ref<number[]>([])
 const selectedArmorTypes = ref<number[]>([])
+
 const toNullableNumber = (v: unknown): number | undefined => {
   if (v === '' || v === null || v === undefined) return undefined
   const n = Number(v)
@@ -121,6 +122,7 @@ const armorTypeNames = ['Helmet', 'Chestplate', 'Gauntlets', 'Greaves', 'Sabaton
 const elementTypeNames = ['Fire', 'Water', 'Earth', 'Air']
 const round1 = (v: unknown) => Number(Number(v ?? 0).toFixed(1))
 const elementLabel = (x: unknown) => elementTypeNames[Number(x)] ?? 'Unknown'
+
 const toggleElement = (el: ItemElementType) => {
   if (selectedElements.value.includes(el)) {
     selectedElements.value = selectedElements.value.filter(x => x !== el)
@@ -130,11 +132,13 @@ const toggleElement = (el: ItemElementType) => {
   page.value = 1
   void fetchData()
 }
+
 const toggleWeaponType = (idx: number) => {
   selectedWeaponTypes.value = selectedWeaponTypes.value.includes(idx) ? selectedWeaponTypes.value.filter(x => x !== idx) : [...selectedWeaponTypes.value, idx]
   page.value = 1
   void fetchData()
 }
+
 const toggleArmorType = (idx: number) => {
   selectedArmorTypes.value = selectedArmorTypes.value.includes(idx) ? selectedArmorTypes.value.filter(x => x !== idx) : [...selectedArmorTypes.value, idx]
   page.value = 1
@@ -145,6 +149,7 @@ const toggleArmorType = (idx: number) => {
 <template>
   <div class="min-h-screen w-full bg-zinc-950 p-4 text-gray-200 flex justify-center items-center">
     <div class="w-full max-w-7xl mx-auto bg-zinc-900 border border-zinc-800 rounded-lg shadow-2xl p-6">
+
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <h1 class="text-2xl font-bold text-white">Marketplace · Buy</h1>
         <div class="inline-flex bg-zinc-800 rounded p-1">
@@ -153,7 +158,7 @@ const toggleArmorType = (idx: number) => {
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-5">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3 wyszukiwarka-panel">
         <div class="md:col-span-2">
           <input v-model="search" type="text" placeholder="Search items..." class="w-full px-3 py-2 rounded bg-zinc-800 border border-zinc-700" />
         </div>
@@ -172,34 +177,36 @@ const toggleArmorType = (idx: number) => {
         </div>
       </div>
 
-      <div class="grid grid-cols-2 md:grid-cols-6 gap-3 mb-5">
-        <input v-model.number="minPrice" type="number" placeholder="Min price" class="px-3 py-2 rounded bg-zinc-800 border border-zinc-700" @change="page=1; fetchData()" />
-        <input v-model.number="maxPrice" type="number" placeholder="Max price" class="px-3 py-2 rounded bg-zinc-800 border border-zinc-700" @change="page=1; fetchData()" />
-        <input v-model.number="minCut" type="number" placeholder="Min cut/res" class="px-3 py-2 rounded bg-zinc-800 border border-zinc-700" @change="page=1; fetchData()" />
-        <input v-model.number="maxCut" type="number" placeholder="Max cut/res" class="px-3 py-2 rounded bg-zinc-800 border border-zinc-700" @change="page=1; fetchData()" />
-        <input v-model.number="minBlunt" type="number" placeholder="Min blunt/res" class="px-3 py-2 rounded bg-zinc-800 border border-zinc-700" @change="page=1; fetchData()" />
-        <input v-model.number="maxBlunt" type="number" placeholder="Max blunt/res" class="px-3 py-2 rounded bg-zinc-800 border border-zinc-700" @change="page=1; fetchData()" />
+      <div class="grid grid-cols-2 md:grid-cols-6 gap-3 liczbowe-panel">
+        <input v-model.number="minPrice" type="number" placeholder="Min price" class="w-full px-3 py-2 rounded bg-zinc-800 border border-zinc-700" @change="page=1; fetchData()" />
+        <input v-model.number="maxPrice" type="number" placeholder="Max price" class="w-full px-3 py-2 rounded bg-zinc-800 border border-zinc-700" @change="page=1; fetchData()" />
+        <input v-model.number="minCut" type="number" placeholder="Min cut/res" class="w-full px-3 py-2 rounded bg-zinc-800 border border-zinc-700" @change="page=1; fetchData()" />
+        <input v-model.number="maxCut" type="number" placeholder="Max cut/res" class="w-full px-3 py-2 rounded bg-zinc-800 border border-zinc-700" @change="page=1; fetchData()" />
+        <input v-model.number="minBlunt" type="number" placeholder="Min blunt/res" class="w-full px-3 py-2 rounded bg-zinc-800 border border-zinc-700" @change="page=1; fetchData()" />
+        <input v-model.number="maxBlunt" type="number" placeholder="Max blunt/res" class="w-full px-3 py-2 rounded bg-zinc-800 border border-zinc-700" @change="page=1; fetchData()" />
       </div>
 
-      <div class="flex flex-wrap items-center gap-2 mb-5">
+      <div class="flex flex-wrap items-center gap-2 tagi-panel">
         <button class="px-3 py-1.5 rounded border" :class="sortDirection===SortDirection.Asc?'bg-zinc-700 border-zinc-600':'bg-zinc-800 border-zinc-700'" @click="sortDirection=SortDirection.Asc">Price Asc</button>
         <button class="px-3 py-1.5 rounded border" :class="sortDirection===SortDirection.Desc?'bg-zinc-700 border-zinc-600':'bg-zinc-800 border-zinc-700'" @click="sortDirection=SortDirection.Desc">Price Desc</button>
+
         <button v-for="(name, idx) in elementTypeNames" :key="name" class="px-3 py-1.5 rounded border"
-          :class="selectedElements.includes(idx as ItemElementType)?'bg-blue-700 border-blue-600':'bg-zinc-800 border-zinc-700'"
-          @click="toggleElement(idx as ItemElementType)">
+                :class="selectedElements.includes(idx as ItemElementType)?'bg-blue-700 border-blue-600':'bg-zinc-800 border-zinc-700'"
+                @click="toggleElement(idx as ItemElementType)">
           {{ name }}
         </button>
+
         <template v-if="tab==='weapons'">
           <button v-for="(name, idx) in weaponTypeNames" :key="`wt-${name}`" class="px-3 py-1.5 rounded border"
-            :class="selectedWeaponTypes.includes(idx)?'bg-emerald-700 border-emerald-600':'bg-zinc-800 border-zinc-700'"
-            @click="toggleWeaponType(idx)">
+                  :class="selectedWeaponTypes.includes(idx)?'bg-emerald-700 border-emerald-600':'bg-zinc-800 border-zinc-700'"
+                  @click="toggleWeaponType(idx)">
             {{ name }}
           </button>
         </template>
         <template v-else>
           <button v-for="(name, idx) in armorTypeNames" :key="`at-${name}`" class="px-3 py-1.5 rounded border"
-            :class="selectedArmorTypes.includes(idx)?'bg-emerald-700 border-emerald-600':'bg-zinc-800 border-zinc-700'"
-            @click="toggleArmorType(idx)">
+                  :class="selectedArmorTypes.includes(idx)?'bg-emerald-700 border-emerald-600':'bg-zinc-800 border-zinc-700'"
+                  @click="toggleArmorType(idx)">
             {{ name }}
           </button>
         </template>
@@ -208,7 +215,8 @@ const toggleArmorType = (idx: number) => {
       <div v-if="errorMessage" class="mb-4 p-3 rounded bg-red-900/40 border border-red-500 text-red-200">{{ errorMessage }}</div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 min-h-[200px] relative">
-        <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-zinc-900/80 rounded">Loading...</div>
+        <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-zinc-900/80 rounded z-10">Loading...</div>
+
         <article v-for="item in items" :key="item.listingId" class="bg-zinc-800 border border-zinc-700 rounded p-4 space-y-3">
           <div class="space-y-1">
             <h3 class="text-white font-semibold">{{ item.name }}</h3>
@@ -220,6 +228,7 @@ const toggleArmorType = (idx: number) => {
               <RouterLink :to="`/users/${(item as any).sellerId || ''}`" class="hover:text-blue-300">Seller: {{ (item as any).sellerUsername || 'Unknown' }}</RouterLink>
             </div>
           </div>
+
           <div class="text-xs text-zinc-300 bg-zinc-900/70 rounded p-2 leading-6">
             <template v-if="tab === 'weapons'">
               <span class="inline-flex items-center gap-1 mr-8"><Sword class="w-3.5 h-3.5 text-red-400" />Cut: {{ round1((item as any).cut) }}</span>
@@ -235,6 +244,7 @@ const toggleArmorType = (idx: number) => {
               <span v-for="el in item.elements" :key="`${el.type}-${el.value}`" class="ml-3">{{ elementLabel(el.type) }} {{ round1(el.value) }}</span>
             </div>
           </div>
+
           <div class="flex items-center justify-between pt-1">
             <div class="inline-flex items-center gap-1 text-yellow-400 font-bold"><Coins class="w-4 h-4" /> {{ Number(item.price).toLocaleString() }}</div>
             <button class="px-3 py-2 bg-blue-600 hover:bg-blue-500 rounded font-semibold" @click="handleBuy(item.listingId)">Buy</button>
@@ -250,6 +260,19 @@ const toggleArmorType = (idx: number) => {
           <button class="px-3 py-1.5 rounded bg-zinc-800 border border-zinc-700 disabled:opacity-50" :disabled="page >= totalPages" @click="nextPage">Next</button>
         </div>
       </div>
+
     </div>
   </div>
 </template>
+
+<style scoped>
+
+.wyszukiwarka-panel,
+.liczbowe-panel {
+  margin-bottom: 28px !important;
+}
+
+.tagi-panel {
+  margin-bottom: 32px !important;
+}
+</style>
