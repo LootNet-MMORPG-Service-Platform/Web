@@ -17,7 +17,7 @@ const errorMessage = ref('')
 const successMessage = ref('')
 
 const loginForm = ref({
-  username: '',
+  email: '',
   password: ''
 })
 
@@ -54,7 +54,7 @@ const handleLogin = async () => {
 
   try {
     const response = await api.post<AuthResponse>('/auth/login', {
-      username: loginForm.value.username,
+      email: loginForm.value.email,
       password: loginForm.value.password
     })
 
@@ -102,7 +102,8 @@ const handleRegister = async () => {
     await api.post<string>('/auth/register', {
       username: registerForm.value.username,
       email: registerForm.value.email,
-      password: registerForm.value.password
+      password: registerForm.value.password,
+      verificationClient: 0
     })
 
     successMessage.value = 'Account created. Check your email to verify it before logging in.'
@@ -155,8 +156,8 @@ const handleForgotPassword = async () => {
 
       <form v-if="mode === 'login'" @submit.prevent="handleLogin" class="flex flex-col gap-4">
         <div>
-          <label class="block text-gray-400 mb-1 font-semibold" for="username">Username</label>
-          <input id="username" v-model="loginForm.username" type="text" required :disabled="isLoading || !!successMessage" class="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 text-white rounded focus:outline-none focus:border-green-500 transition-colors disabled:opacity-50" placeholder="Enter your username" />
+          <label class="block text-gray-400 mb-1 font-semibold" for="email">Email</label>
+          <input id="email" v-model="loginForm.email" type="email" required maxlength="256" :disabled="isLoading || !!successMessage" class="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 text-white rounded focus:outline-none focus:border-green-500 transition-colors disabled:opacity-50" placeholder="you@example.com" />
         </div>
 
         <div>

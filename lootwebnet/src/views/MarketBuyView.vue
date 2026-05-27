@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { Coins, Shield, Sparkles, Sword } from 'lucide-vue-next'
 import { MarketplaceService } from '../services/marketplaceService'
 import { toAssetUrl } from '../services/urls'
 import type { ArmorMarketDTO, ArmorQueryDTO, PagedResultDTO, WeaponMarketDTO, WeaponQueryDTO } from '../types/marketplace'
 import { ArmorSortColumns, ItemElementType, SortDirection, WeaponSortColumns } from '../types/marketplace'
 import { buyItem, fetchPlayerData } from '../store'
+import { onRealtimeEvent } from '../services/realtimeService'
 
 const tab = ref<'weapons' | 'armors'>('weapons')
 const search = ref('')
@@ -16,6 +17,7 @@ const errorMessage = ref('')
 const totalCount = ref(0)
 const weapons = ref<WeaponMarketDTO[]>([])
 const armors = ref<ArmorMarketDTO[]>([])
+let offRealtime: (() => void) | null = null
 
 const sortDirection = ref(SortDirection.Asc)
 const minPrice = ref<number | null>(null)
@@ -80,6 +82,15 @@ const fetchData = async () => {
 
 onMounted(() => {
   void fetchData()
+  offRealtime = onRealtimeEvent((payload: any) => {
+    if (payload?.domain === 'market') {
+      void fetchData()
+    }
+  })
+})
+
+onUnmounted(() => {
+  offRealtime?.()
 })
 
 watch([tab, pageSize, sortDirection], () => {

@@ -77,7 +77,7 @@ const handleLogout = async () => {
   } finally {
     localStorage.removeItem('token')
     localStorage.removeItem('refreshToken')
-    await stopRealtime()
+    void stopRealtime()
     await router.push('/login')
   }
 }

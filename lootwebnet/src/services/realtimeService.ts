@@ -5,13 +5,22 @@ let connection: HubConnection | null = null
 const listeners = new Set<(payload: any) => void>()
 
 function buildConnection() {
-  return new HubConnectionBuilder()
+  const nextConnection = new HubConnectionBuilder()
     .withUrl(HUB_URL, {
       accessTokenFactory: () => localStorage.getItem('token') ?? ''
     })
     .withAutomaticReconnect()
     .configureLogging(LogLevel.Warning)
     .build()
+
+  nextConnection.on('AppStateChanged', (payload) => {
+    listeners.forEach(fn => fn(payload))
+  })
+  nextConnection.on('UserStateChanged', (payload) => {
+    listeners.forEach(fn => fn(payload))
+  })
+
+  return nextConnection
 }
 
 export async function startRealtime() {
@@ -25,12 +34,6 @@ export async function startRealtime() {
   if (connection.state === HubConnectionState.Disconnected) {
     try {
       await connection.start()
-      connection.on('AppStateChanged', (payload) => {
-        listeners.forEach(fn => fn(payload))
-      })
-      connection.on('UserStateChanged', (payload) => {
-        listeners.forEach(fn => fn(payload))
-      })
     } catch (error) {
       console.error('Realtime connection failed', error)
     }
@@ -44,6 +47,8 @@ export async function stopRealtime() {
   if (connection.state !== HubConnectionState.Disconnected) {
     await connection.stop()
   }
+
+  connection = null
 }
 
 export function onRealtimeEvent(handler: (payload: any) => void) {

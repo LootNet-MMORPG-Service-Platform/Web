@@ -3,6 +3,35 @@ import { API_BASE_URL } from './urls'
 
 const BASE_URL = API_BASE_URL
 
+function formatApiError(raw: string, fallback: string) {
+  if (!raw)
+    return fallback
+
+  try {
+    const parsed = JSON.parse(raw)
+    const errors = parsed?.errors
+
+    if (errors && typeof errors === 'object') {
+      const messages = Object.values(errors)
+        .flatMap(value => Array.isArray(value) ? value : [value])
+        .filter(value => typeof value === 'string' && value.trim().length > 0)
+
+      if (messages.length > 0)
+        return messages.join(' ')
+    }
+
+    if (typeof parsed?.message === 'string' && parsed.message.trim())
+      return parsed.message
+
+    if (typeof parsed?.title === 'string' && parsed.title.trim())
+      return parsed.title
+  } catch {
+    // Plain-text API responses are valid for several auth endpoints.
+  }
+
+  return raw || fallback
+}
+
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers)
 
@@ -35,7 +64,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
         const refreshRes = await fetch(`${BASE_URL}/auth/refresh`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refreshToken })
+          body: JSON.stringify(refreshToken)
         })
 
         if (refreshRes.ok) {
@@ -65,7 +94,10 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
       navigateToError()
     }
     const errorText = await response.text()
-    const message = errorText || `API Request Failed with status ${response.status}`
+    const message = formatApiError(errorText, `API Request Failed with status ${response.status}`)
+    if (response.status === 403 && message.includes('Account is blocked')) {
+      forceLogout()
+    }
     const error = new Error(message) as Error & { status?: number }
     error.status = response.status
     throw error
